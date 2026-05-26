@@ -1,0 +1,6 @@
+[ProdSmart Server] Parent watchdog enabled (pid=27940, create_time=134221986074734561).
+[ProdSmart Server] Waiting for parent process handle to signal.
+INFO:     Started server process [14208]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8132 (Press CTRL+C to quit)

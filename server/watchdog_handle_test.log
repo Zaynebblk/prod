@@ -1,0 +1,6 @@
+[ProdSmart Server] Parent watchdog enabled (handle=456).
+[ProdSmart Server] Waiting for parent handle to signal.
+INFO:     Started server process [22980]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8137 (Press CTRL+C to quit)

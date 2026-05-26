@@ -1,0 +1,10 @@
+﻿{
+  "markdownlint.ignore": [
+    "**/*.agent.md",
+    "**/.vscode/extensions/**",
+    "**/globalStorage/github.copilot-chat/**"
+  ],
+  "files.associations": {
+    "**/*.agent.md": "plaintext"
+  }
+}

@@ -54499,3 +54499,95 @@ INFO:     Application startup complete.
 INFO:     Uvicorn running on http://127.0.0.1:8144 (Press CTRL+C to quit)
 INFO:     Shutting down
 INFO:     Waiting for connections to close. (CTRL+C to force quit)
+[ProdSmart Server] Parent watchdog enabled (handle=4968).
+[ProdSmart Server] Waiting for parent handle to signal.
+INFO:     Started server process [6064]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8144 (Press CTRL+C to quit)
+INFO:     Shutting down
+INFO:     Waiting for connections to close. (CTRL+C to force quit)
+[ProdSmart Server] Parent watchdog enabled (handle=4928).
+[ProdSmart Server] Waiting for parent handle to signal.
+INFO:     Started server process [8888]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8144 (Press CTRL+C to quit)
+INFO:     Shutting down
+INFO:     Waiting for connections to close. (CTRL+C to force quit)
+[ProdSmart Server] Parent watchdog enabled (handle=5128).
+[ProdSmart Server] Waiting for parent handle to signal.
+INFO:     Started server process [17480]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8144 (Press CTRL+C to quit)
+INFO:     Shutting down
+INFO:     Waiting for connections to close. (CTRL+C to force quit)
+[ProdSmart Server] Parent watchdog enabled (handle=4928).
+[ProdSmart Server] Waiting for parent handle to signal.
+INFO:     Started server process [13952]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8144 (Press CTRL+C to quit)
+[ProdSmart Server] Parent watchdog enabled (handle=4908).
+[ProdSmart Server] Waiting for parent handle to signal.
+INFO:     Started server process [15324]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8144 (Press CTRL+C to quit)
+[ProdSmart Server] Parent watchdog enabled (handle=4184).
+[ProdSmart Server] Waiting for parent handle to signal.
+INFO:     Started server process [13240]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8144 (Press CTRL+C to quit)
+INFO:     Shutting down
+INFO:     Waiting for connections to close. (CTRL+C to force quit)
+[ProdSmart Server] Parent watchdog enabled (handle=5160).
+[ProdSmart Server] Waiting for parent handle to signal.
+INFO:     Started server process [19584]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8144 (Press CTRL+C to quit)
+INFO:     Shutting down
+INFO:     Waiting for connections to close. (CTRL+C to force quit)
+[ProdSmart Server] Parent watchdog enabled (handle=4900).
+[ProdSmart Server] Waiting for parent handle to signal.
+INFO:     Started server process [4896]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8144 (Press CTRL+C to quit)
+INFO:     Shutting down
+INFO:     Waiting for connections to close. (CTRL+C to force quit)
+[ProdSmart Server] Parent watchdog enabled (handle=4388).
+[ProdSmart Server] Waiting for parent handle to signal.
+INFO:     Started server process [4972]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8144 (Press CTRL+C to quit)
+INFO:     Shutting down
+INFO:     Waiting for connections to close. (CTRL+C to force quit)
+[ProdSmart Server] Parent watchdog enabled (handle=4412).
+[ProdSmart Server] Waiting for parent handle to signal.
+INFO:     Started server process [7000]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8144 (Press CTRL+C to quit)
+INFO:     Shutting down
+INFO:     Waiting for connections to close. (CTRL+C to force quit)
+[ProdSmart Server] Parent watchdog enabled (handle=4948).
+[ProdSmart Server] Waiting for parent handle to signal.
+INFO:     Started server process [16920]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8144 (Press CTRL+C to quit)
+INFO:     Shutting down
+INFO:     Waiting for connections to close. (CTRL+C to force quit)
+[ProdSmart Server] Parent watchdog enabled (handle=5056).
+[ProdSmart Server] Waiting for parent handle to signal.
+INFO:     Started server process [20524]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8144 (Press CTRL+C to quit)
+INFO:     Shutting down
+INFO:     Waiting for connections to close. (CTRL+C to force quit)

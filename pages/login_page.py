@@ -169,7 +169,7 @@ class CreateAccountPage(QWidget):
         self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
         card_layout.addLayout(password_block)
 
-        confirm_block, self.confirm_input = field_block("Confirm Password", "Repeat your password")
+        confirm_block, self.confirm_input = field_block("Confirm Password", "Confirm your password")
         self.confirm_input.setEchoMode(QLineEdit.EchoMode.Password)
         card_layout.addLayout(confirm_block)
 

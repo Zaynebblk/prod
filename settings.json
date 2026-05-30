@@ -1,5 +1,5 @@
 {
-    "theme": "Dark",
+    "theme": "Light",
     "default_important": false,
     "show_completed": false,
     "task_reminders": true,
@@ -30,8 +30,8 @@
             "user_id": 11
         }
     ],
-    "accent_color": "#00557F",
-    "accent2_color": "#55AAFF",
+    "accent_color": "#6589FF",
+    "accent2_color": "#C4DEFF",
     "pomodoro_playlist_url": "https://youtu.be/Vq3drzaL20A?si=PceJmfeB8oLO4D8Y",
     "pomodoro_background_audio_path": "",
     "pomodoro_auto_play_background_audio": true,

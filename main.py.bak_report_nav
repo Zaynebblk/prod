@@ -809,17 +809,17 @@ class MainApp(QMainWindow):
     def open_report_from_history(self, activity_id):
         if hasattr(self, "page_report"):
             self.page_report.load_report(activity_id)
-        self.content_stack.setCurrentWidget(self.page_report)
+        self.content_stack.setCurrentIndex(6)
         self._set_active_nav(self.btn_history)
 
     def open_history_from_report(self):
-        self.content_stack.setCurrentWidget(self.page_history)
+        self.content_stack.setCurrentIndex(4)
         self._set_active_nav(self.btn_history)
 
     def open_quick_stats_from_history(self, activity_id):
         if hasattr(self, "page_quick_stats"):
             self.page_quick_stats.load_activity(activity_id)
-        self.content_stack.setCurrentWidget(self.page_quick_stats)
+        self.content_stack.setCurrentIndex(7)
         self._set_active_nav(self.btn_history)
 
     def open_history_from_quick_stats(self):

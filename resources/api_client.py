@@ -510,6 +510,10 @@ def api_send_team_message(team_id, message):
     return _request("POST", f"/teams/{team_id}/messages", {"message": message})
 
 
+def api_send_team_alert(team_id, message):
+    return _request("POST", f"/teams/{team_id}/alerts", {"message": message})
+
+
 def api_get_team_pomodoro(team_id):
     return _request("GET", f"/teams/{team_id}/pomodoro")
 

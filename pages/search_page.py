@@ -36,6 +36,7 @@ class SearchPage(QWidget):
     def __init__(self):
         super().__init__()
         self.setObjectName("SearchPage")
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.current_theme = "Light"
         self._debounce = QTimer(self)
         self._debounce.setSingleShot(True)
@@ -51,14 +52,16 @@ class SearchPage(QWidget):
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QFrame.Shape.NoFrame)
-        scroll.setStyleSheet("QScrollArea { border: none; background: transparent; }")
-        root.addWidget(scroll)
+        self.scroll = QScrollArea()
+        self.scroll.setObjectName("SearchScroll")
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setFrameShape(QFrame.Shape.NoFrame)
+        root.addWidget(self.scroll)
 
         self.container = QWidget()
-        scroll.setWidget(self.container)
+        self.container.setObjectName("SearchContainer")
+        self.container.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        self.scroll.setWidget(self.container)
         layout = QVBoxLayout(self.container)
         layout.setContentsMargins(40, 40, 40, 40)
         layout.setSpacing(16)
@@ -107,6 +110,8 @@ class SearchPage(QWidget):
         layout.addWidget(self.results_title)
 
         self.results_container = QWidget()
+        self.results_container.setObjectName("SearchResultsContainer")
+        self.results_container.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.results_layout = QVBoxLayout(self.results_container)
         self.results_layout.setContentsMargins(0, 0, 0, 0)
         self.results_layout.setSpacing(12)
@@ -124,6 +129,8 @@ class SearchPage(QWidget):
         border = rgba(c["border"], 0.8)
         self.setStyleSheet(
             f"QWidget#SearchPage {{ background: {c['bg']}; font-family: '{FONT_FAMILY}', 'Segoe UI'; }}"
+            f"QWidget#SearchContainer, QWidget#SearchResultsContainer {{ background: {c['bg']}; }}"
+            f"QScrollArea#SearchScroll {{ border: none; background: {c['bg']}; }}"
             f"QLabel#SearchTitle {{ color: {c['text']}; font-size: 30px; font-weight: 900; }}"
             f"QLabel#SearchSubtitle {{ color: {c['sub']}; font-size: 12px; font-weight: 600; }}"
             f"QFrame#SearchBox {{ background: {box_bg}; border: 1px solid {border}; border-radius: 18px; }}"
@@ -132,6 +139,11 @@ class SearchPage(QWidget):
             f"QLabel#ResultsTitle {{ color: {c['text']}; font-size: 14px; font-weight: 900; }}"
             f"QLabel#SearchEmpty {{ color: {c['sub']}; font-size: 12px; font-weight: 600; }}"
         )
+        if hasattr(self, "scroll"):
+            try:
+                self.scroll.viewport().setStyleSheet(f"background: {c['bg']};")
+            except Exception:
+                pass
 
     def _clear_results(self):
         while self.results_layout.count():

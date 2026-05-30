@@ -1008,7 +1008,7 @@ def list_team_join_requests(team_id: int, authorization: Optional[str] = Header(
     user = _require_user(authorization)
     conn = _get_db()
     actor_role = _ensure_member(conn, team_id, user["id"])
-    _require_team_role(actor_role, "owner")
+    _require_team_role(actor_role, "admin")
     rows = conn.execute(
         """SELECT r.id, r.user_id, r.created_at, u.username
            FROM team_join_requests r
@@ -1030,7 +1030,7 @@ def accept_team_join_request(
     user = _require_user(authorization)
     conn = _get_db()
     actor_role = _ensure_member(conn, team_id, user["id"])
-    _require_team_role(actor_role, "owner")
+    _require_team_role(actor_role, "admin")
 
     req = conn.execute(
         "SELECT id, user_id, status FROM team_join_requests WHERE id = ? AND team_id = ?",
@@ -1072,7 +1072,7 @@ def reject_team_join_request(
     user = _require_user(authorization)
     conn = _get_db()
     actor_role = _ensure_member(conn, team_id, user["id"])
-    _require_team_role(actor_role, "owner")
+    _require_team_role(actor_role, "admin")
 
     req = conn.execute(
         "SELECT id, user_id, status FROM team_join_requests WHERE id = ? AND team_id = ?",
@@ -1107,7 +1107,7 @@ def invite_team_member(
         raise HTTPException(status_code=400, detail="Username is required.")
     conn = _get_db()
     actor_role = _ensure_member(conn, team_id, user["id"])
-    _require_team_role(actor_role, "owner")
+    _require_team_role(actor_role, "admin")
 
     target = conn.execute(
         "SELECT id, username FROM users WHERE lower(username) = lower(?)",
@@ -1153,7 +1153,7 @@ def get_team(team_id: int, authorization: Optional[str] = Header(default=None, a
     if not team:
         raise HTTPException(status_code=404, detail="Team not found.")
     data = {"id": team["id"], "name": team["name"], "role": role}
-    if role == "owner" or team["owner_id"] == user["id"]:
+    if _role_rank(role) >= _role_rank("admin") or team["owner_id"] == user["id"]:
         data["join_code"] = team["join_code"]
     return data
 
@@ -1184,7 +1184,7 @@ def remove_team_member(
     user = _require_user(authorization)
     conn = _get_db()
     actor_role = _ensure_member(conn, team_id, user["id"])
-    _require_team_role(actor_role, "owner")
+    _require_team_role(actor_role, "admin")
 
     target = conn.execute(
         "SELECT role FROM team_members WHERE team_id = ? AND user_id = ?",
@@ -1198,7 +1198,7 @@ def remove_team_member(
         raise HTTPException(status_code=400, detail="Cannot remove team owner.")
     if int(member_user_id) == int(user["id"]):
         conn.close()
-        raise HTTPException(status_code=400, detail="Owner cannot remove themselves.")
+        raise HTTPException(status_code=400, detail="Admins cannot remove themselves.")
 
     conn.execute(
         "DELETE FROM team_members WHERE team_id = ? AND user_id = ?",
@@ -1224,11 +1224,11 @@ def update_team_member_role(
 ):
     user = _require_user(authorization)
     new_role = str(payload.role or "").strip().lower()
-    if new_role not in ("member", "manager"):
+    if new_role not in ("member", "manager", "admin"):
         raise HTTPException(status_code=400, detail="Invalid role.")
     conn = _get_db()
     actor_role = _ensure_member(conn, team_id, user["id"])
-    _require_team_role(actor_role, "owner")
+    _require_team_role(actor_role, "admin")
 
     target = conn.execute(
         "SELECT role FROM team_members WHERE team_id = ? AND user_id = ?",
@@ -1398,7 +1398,7 @@ def create_team_task(team_id: int, payload: TeamTaskPayload, authorization: Opti
         except Exception:
             conn.close()
             raise HTTPException(status_code=400, detail="Invalid assigned_to.")
-        _require_team_role(actor_role, "owner")
+        _require_team_role(actor_role, "admin")
         member = conn.execute(
             "SELECT 1 FROM team_members WHERE team_id = ? AND user_id = ?",
             (team_id, assigned_to),
@@ -1450,8 +1450,8 @@ def update_team_task(team_id: int, task_id: int, payload: TeamTaskUpdatePayload,
     if not existing:
         conn.close()
         raise HTTPException(status_code=404, detail="Task not found.")
-    actor_is_owner = str(actor_role or "").strip().lower() == "owner"
-    if not actor_is_owner:
+    actor_is_admin = _role_rank(actor_role) >= _role_rank("admin")
+    if not actor_is_admin:
         non_completion_change = bool(
             payload.title is not None
             or payload.description is not None
@@ -1462,7 +1462,7 @@ def update_team_task(team_id: int, task_id: int, payload: TeamTaskUpdatePayload,
         )
         if non_completion_change:
             conn.close()
-            raise HTTPException(status_code=403, detail="Only the team owner can edit task details.")
+            raise HTTPException(status_code=403, detail="Only a team admin can edit task details.")
         if payload.is_completed is not None:
             try:
                 assigned_to = int(existing["assigned_to"]) if existing["assigned_to"] is not None else None
@@ -1504,7 +1504,7 @@ def update_team_task(team_id: int, task_id: int, payload: TeamTaskUpdatePayload,
         values.append(1 if payload.is_important else 0)
         changed["is_important"] = bool(payload.is_important)
     if "assigned_to" in getattr(payload, "model_fields_set", set()):
-        _require_team_role(actor_role, "owner")
+        _require_team_role(actor_role, "admin")
         assigned_to = payload.assigned_to
         if assigned_to is not None:
             try:
@@ -1562,7 +1562,7 @@ def delete_team_task(team_id: int, task_id: int, authorization: Optional[str] = 
     user = _require_user(authorization)
     conn = _get_db()
     actor_role = _ensure_member(conn, team_id, user["id"])
-    _require_team_role(actor_role, "owner")
+    _require_team_role(actor_role, "admin")
     conn.execute("DELETE FROM team_tasks WHERE team_id = ? AND id = ?", (team_id, task_id))
     _emit_team_event(conn, team_id, "task_deleted", user["id"], {"task_id": int(task_id)})
     conn.commit()
@@ -1753,6 +1753,38 @@ def send_team_message(team_id: int, payload: TeamMessagePayload, authorization: 
         (msg_id,)
     ).fetchone()
     _emit_team_event(conn, team_id, "team_message", user["id"], {"message_id": int(msg_id)})
+    conn.commit()
+    conn.close()
+    return {"message": dict(row) if row else None}
+
+
+@app.post("/teams/{team_id}/alerts")
+def send_team_alert(team_id: int, payload: TeamMessagePayload, authorization: Optional[str] = Header(default=None, alias="Authorization")):
+    user = _require_user(authorization)
+    msg = (payload.message or "").strip()
+    if not msg:
+        raise HTTPException(status_code=400, detail="Alert cannot be empty.")
+    if len(msg) > 1000:
+        raise HTTPException(status_code=400, detail="Alert is too long.")
+    conn = _get_db()
+    actor_role = _ensure_member(conn, team_id, user["id"])
+    _require_team_role(actor_role, "manager")
+    alert_message = f"[ALERT] {msg}"
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO team_messages (team_id, user_id, message) VALUES (?, ?, ?)",
+        (team_id, user["id"], alert_message)
+    )
+    msg_id = cur.lastrowid
+    row = conn.execute(
+        """SELECT team_messages.id, team_messages.message, team_messages.created_at,
+                  users.id as user_id, users.username
+           FROM team_messages
+           JOIN users ON users.id = team_messages.user_id
+           WHERE team_messages.id = ?""",
+        (msg_id,)
+    ).fetchone()
+    _emit_team_event(conn, team_id, "team_alert", user["id"], {"message_id": int(msg_id)})
     conn.commit()
     conn.close()
     return {"message": dict(row) if row else None}

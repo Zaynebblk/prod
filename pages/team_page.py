@@ -627,19 +627,45 @@ class _TeamAnalyticsDialog(QDialog):
     def __init__(self, parent, *, theme: str, team_id: int, team_name: str, data: dict):
         super().__init__(parent)
         self.setWindowTitle("Team Analytics")
-        self.setMinimumWidth(720)
+        self.setMinimumSize(720, 560)
+        self.resize(900, 720)
         self.current_theme = theme
         self.team_id = int(team_id)
         self.data = dict(data or {})
 
         c = get_theme(theme)
         is_dark = theme == "Dark"
-        bg = c["bg"] if not is_dark else c["deep"]
+        bg = c["bg"]
         self._card_bg = rgba(c["card_alt"], 0.92) if is_dark else rgba(c["card"], 0.95)
         self._border = rgba(c["border"], 0.7)
         self.setStyleSheet(f"QDialog {{ background: {bg}; }} QLabel {{ color: {c['text']}; }}")
 
-        root = QVBoxLayout(self)
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(0)
+
+        self.analytics_scroll = QScrollArea()
+        self.analytics_scroll.setWidgetResizable(True)
+        self.analytics_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        self.analytics_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.analytics_scroll.setStyleSheet(
+            f"QScrollArea {{ background: {bg}; border: none; }}"
+            f"QScrollArea::viewport {{ background: {bg}; }}"
+            f"QScrollBar:vertical {{ background: {bg}; width: 10px; margin: 0; }}"
+            f"QScrollBar::handle:vertical {{ background: {rgba(c['border'], 0.85)}; border-radius: 5px; min-height: 24px; }}"
+            f"QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0; }}"
+            f"QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{ background: {bg}; }}"
+        )
+        self.analytics_scroll.viewport().setStyleSheet(f"background: {bg};")
+        outer.addWidget(self.analytics_scroll)
+
+        self.analytics_content = QWidget()
+        self.analytics_content.setObjectName("TeamAnalyticsContent")
+        self.analytics_content.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        self.analytics_content.setStyleSheet(f"QWidget#TeamAnalyticsContent {{ background: {bg}; }}")
+        self.analytics_scroll.setWidget(self.analytics_content)
+
+        root = QVBoxLayout(self.analytics_content)
         root.setContentsMargins(22, 22, 22, 22)
         root.setSpacing(14)
 
@@ -1544,9 +1570,13 @@ class TeamPage(QWidget):
     def update_theme(self, theme):
         self.current_theme = theme
         c = get_theme(theme)
-        page_bg = "#000000" if theme == "Dark" else "#FFFFFF"
+        page_bg = c["bg"]
         panel_bg = rgba(c["card_alt"], 0.92) if theme == "Dark" else c["card_alt"]
         chat_bg = rgba(c["card"], 0.85)
+        button_bg = c["accent"]
+        button_hover = c["deep"] if theme == "Light" else c["accent2"]
+        button_disabled_bg = c["deep"] if theme == "Light" else rgba(c["card_alt"], 0.72)
+        button_disabled_text = "#FFFFFF" if theme == "Light" else c["sub"]
         self.setStyleSheet(
             f"QWidget#TeamPage {{ background: {page_bg}; font-family: '{FONT_FAMILY}', 'Segoe UI'; }}"
             f"QWidget#TeamContent {{ background: {page_bg}; }}"
@@ -1558,9 +1588,12 @@ class TeamPage(QWidget):
             f"QLabel#TeamTitle {{ color: {c['text']}; font-size: 30px; font-weight: 900; }}"
             f"QLabel#TeamServer {{ color: {c['sub']}; font-size: 12px; }}"
             f"QFrame#TeamBar {{ background: {rgba(c['card'], 0.96)}; border: 1px solid {c['border']}; border-radius: 14px; }}"
-            f"QComboBox {{ background: {c['input_bg']}; border: 1px solid {c['border']}; border-radius: 8px; padding: 6px 10px; color: {c['text']}; }}"
-            f"QPushButton {{ background: {c['accent']}; color: white; border-radius: 8px; padding: 8px 14px; font-weight: 700; }}"
-            f"QPushButton:hover {{ background: {c['deep']}; }}"
+            f"QComboBox {{ background-color: {c['input_bg']}; border: 1px solid {c['border']}; border-radius: 8px; padding: 6px 10px; color: {c['text']}; }}"
+            f"QComboBox::drop-down {{ border: none; width: 24px; }}"
+            f"QComboBox QAbstractItemView {{ background-color: {c['card']}; color: {c['text']}; selection-background-color: {c['accent_soft']}; selection-color: {c['deep']}; border: 1px solid {c['border']}; }}"
+            f"QPushButton {{ background-color: {button_bg}; color: #FFFFFF; border: 1px solid {button_bg}; border-radius: 8px; padding: 8px 14px; font-weight: 800; }}"
+            f"QPushButton:hover {{ background-color: {button_hover}; border-color: {button_hover}; color: #FFFFFF; }}"
+            f"QPushButton:disabled {{ background-color: {button_disabled_bg}; color: {button_disabled_text}; border: 1px solid {c['border']}; }}"
             f"QLabel#TeamJoinCode {{ color: {c['sub']}; font-weight: 600; }}"
             f"QLabel#TeamSectionTitle {{ color: {c['text']}; font-size: 18px; font-weight: 800; }}"
             f"QLabel#TeamRecentTasksTitle {{ color: {c['text']}; font-size: 14px; font-weight: 900; }}"
@@ -1572,12 +1605,12 @@ class TeamPage(QWidget):
             f"QLabel#TeamChatTitle {{ color: {c['text']}; font-size: 14px; font-weight: 900; }}"
             f"QLabel#TeamMembersCount {{ background: transparent; color: {c['sub']}; padding: 2px 2px; font-size: 10px; font-weight: 800; }}"
             f"QLabel#TeamChatHint {{ background: {rgba(c['accent'], 0.2)}; color: {c['accent']}; border-radius: 10px; padding: 2px 8px; font-size: 9px; font-weight: 800; }}"
-            f"QPushButton#TeamAlertButton {{ background: {c['bad']}; color: white; border-radius: 10px; padding: 6px 12px; font-size: 10px; font-weight: 900; }}"
-            f"QPushButton#TeamAlertButton:hover {{ background: #B91C1C; }}"
+            f"QPushButton#TeamAlertButton {{ background-color: {c['bad']}; color: white; border: 1px solid {c['bad']}; border-radius: 10px; padding: 6px 12px; font-size: 10px; font-weight: 900; }}"
+            f"QPushButton#TeamAlertButton:hover {{ background-color: #B91C1C; border-color: #B91C1C; }}"
             f"QFrame#TeamChatInputCard {{ background: {rgba(c['card_alt'], 0.85)}; border: 1px solid {rgba(c['border'], 0.7)}; border-radius: 22px; }}"
             f"QLineEdit#TeamChatInput {{ background: transparent; border: none; padding: 0 4px; color: {c['text']}; font-size: 12px; }}"
-            f"QPushButton#TeamChatSend {{ background: {c['primary_gradient']}; color: white; border-radius: 22px; padding: 0; font-weight: 900; }}"
-            f"QPushButton#TeamChatSend:hover {{ background: {c['accent']}; }}"
+            f"QPushButton#TeamChatSend {{ background: {c['primary_gradient']}; color: white; border: 1px solid {c['accent']}; border-radius: 22px; padding: 0; font-weight: 900; }}"
+            f"QPushButton#TeamChatSend:hover {{ background-color: {c['accent']}; border-color: {c['accent']}; }}"
         )
         self._apply_scroll_background(self.scroll, page_bg)
         self._apply_scroll_background(self.members_scroll, page_bg)
@@ -1591,6 +1624,25 @@ class TeamPage(QWidget):
             )
         if hasattr(self, "tasks_container"):
             self.tasks_container.setStyleSheet(f"QWidget#TeamTasksContainer {{ background: {panel_bg}; }}")
+        button_style = (
+            f"QPushButton {{ background-color: {button_bg}; color: #FFFFFF; "
+            f"border: 1px solid {button_bg}; border-radius: 8px; padding: 8px 14px; font-weight: 800; }}"
+            f"QPushButton:hover {{ background-color: {button_hover}; border-color: {button_hover}; color: #FFFFFF; }}"
+            f"QPushButton:disabled {{ background-color: {button_disabled_bg}; color: {button_disabled_text}; "
+            f"border: 1px solid {c['border']}; }}"
+            f"QPushButton:!enabled {{ background-color: {button_disabled_bg}; color: {button_disabled_text}; "
+            f"border: 1px solid {c['border']}; }}"
+        )
+        for attr in (
+            "btn_refresh", "btn_create", "btn_join", "btn_history", "btn_analytics",
+            "btn_access_requests", "btn_invite_member", "btn_add_task",
+        ):
+            btn = getattr(self, attr, None)
+            if btn:
+                try:
+                    btn.setStyleSheet(button_style)
+                except Exception:
+                    pass
         for i in range(self.tasks_layout.count()):
             item = self.tasks_layout.itemAt(i)
             widget = item.widget() if item else None

@@ -1,5 +1,5 @@
 {
-    "theme": "Light",
+    "theme": "Dark",
     "default_important": false,
     "show_completed": false,
     "task_reminders": true,
@@ -66,7 +66,7 @@
         1,
         11
     ],
-    "cloud_token": "WRIMI1q4segBH87s2hlEUu77Z7b4MtC-9E1p-y3lom0",
-    "cloud_user_id": 11,
-    "cloud_username": "zayneb"
+    "cloud_token": "D91PtWQFrFqWNF8QSiFxWpk9PD99IV23h45JZ_erNoM",
+    "cloud_user_id": 1,
+    "cloud_username": "test"
 }

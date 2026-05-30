@@ -37,6 +37,7 @@ from resources.api_client import (
     api_delete_team_task,
     api_list_team_messages,
     api_send_team_message,
+    api_send_team_alert,
     api_update_team_member_role,
     api_remove_team_member,
     api_list_team_events,
@@ -88,7 +89,7 @@ class _TeamTaskDetailsDialog(QDialog):
 
         c = get_theme(theme)
         is_dark = theme == "Dark"
-        bg = c["bg"] if not is_dark else c["deep"]
+        bg = "#000000" if is_dark else "#FFFFFF"
         txt = c["text"]
         card_bg = rgba(c["card_alt"], 0.92) if is_dark else rgba(c["card"], 0.95)
         border = rgba(c["border"], 0.7)
@@ -153,11 +154,18 @@ class _TeamTaskDetailsDialog(QDialog):
         self.comments_list = QVBoxLayout()
         self.comments_list.setSpacing(10)
         self.comments_container = QWidget()
+        self.comments_container.setObjectName("TeamTaskCommentsContainer")
+        self.comments_container.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        self.comments_container.setStyleSheet(f"QWidget#TeamTaskCommentsContainer {{ background: {card_bg}; }}")
         self.comments_container.setLayout(self.comments_list)
         self.comments_scroll = QScrollArea()
         self.comments_scroll.setWidgetResizable(True)
         self.comments_scroll.setFrameShape(QFrame.Shape.NoFrame)
-        self.comments_scroll.setStyleSheet("QScrollArea { background: transparent; }")
+        self.comments_scroll.setStyleSheet(
+            f"QScrollArea {{ background: {card_bg}; border: none; }}"
+            f"QScrollArea::viewport {{ background: {card_bg}; }}"
+        )
+        self.comments_scroll.viewport().setStyleSheet(f"background: {card_bg};")
         self.comments_scroll.setWidget(self.comments_container)
         self.comments_scroll.setFixedHeight(220)
         cl.addWidget(self.comments_scroll)
@@ -291,26 +299,40 @@ class _TeamHistoryDialog(QDialog):
     def __init__(self, parent, *, theme: str, team_name: str, team_id: int):
         super().__init__(parent)
         self.setWindowTitle("Team History")
-        self.setMinimumWidth(520)
+        self.setMinimumSize(680, 640)
         self.current_theme = theme
         self.team_id = int(team_id)
 
         c = get_theme(theme)
         is_dark = theme == "Dark"
-        bg = c["bg"] if not is_dark else c["deep"]
-        card_bg = rgba(c["card_alt"], 0.92) if is_dark else rgba(c["card"], 0.95)
-        border = rgba(c["border"], 0.7)
+        bg = "#000000" if is_dark else "#FFFFFF"
+        card_bg = rgba(c["card_alt"], 0.92) if is_dark else "#FFFFFF"
+        chip_bg = rgba(c["accent_soft"], 0.92) if is_dark else c["accent_soft"]
+        soft_border = rgba(c["border"], 0.45)
         self._card_bg = card_bg
-        self._border = border
-        self.setStyleSheet(f"QDialog {{ background: {bg}; }} QLabel {{ color: {c['text']}; }}")
+        self._chip_bg = chip_bg
+        self._soft_border = soft_border
+        self.setStyleSheet(
+            f"QDialog {{ background: {bg}; }}"
+            f"QLabel {{ color: {c['text']}; background: transparent; border: none; }}"
+            f"QPushButton {{ background: {c['accent']}; color: white; border: none; border-radius: 10px; padding: 9px 18px; font-weight: 800; }}"
+            f"QPushButton:hover {{ background: {c['deep']}; }}"
+        )
 
         root = QVBoxLayout(self)
         root.setContentsMargins(22, 22, 22, 22)
         root.setSpacing(12)
 
+        header_row = QHBoxLayout()
+        header_row.setSpacing(12)
         title = QLabel(team_name or "Team")
         title.setStyleSheet("font-size: 18px; font-weight: 900;")
-        root.addWidget(title)
+        header_row.addWidget(title, 1)
+        close_btn = QPushButton("Close")
+        close_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        close_btn.clicked.connect(self.accept)
+        header_row.addWidget(close_btn)
+        root.addLayout(header_row)
 
         # Weekly activity chart
         chart_heading = QLabel("Weekly Activity")
@@ -330,14 +352,18 @@ class _TeamHistoryDialog(QDialog):
         root.addWidget(member_heading)
 
         self.member_container = QWidget()
+        self.member_container.setObjectName("TeamHistoryMemberContainer")
+        self.member_container.setStyleSheet(f"QWidget#TeamHistoryMemberContainer {{ background: {bg}; }}")
         self.member_layout = QVBoxLayout(self.member_container)
         self.member_layout.setContentsMargins(0, 0, 0, 0)
-        self.member_layout.setSpacing(6)
+        self.member_layout.setSpacing(8)
         
         self.member_scroll = QScrollArea()
+        self.member_scroll.setObjectName("TeamHistoryMemberScroll")
         self.member_scroll.setWidgetResizable(True)
         self.member_scroll.setFrameShape(QFrame.Shape.NoFrame)
-        self.member_scroll.setStyleSheet("QScrollArea { background: transparent; }")
+        self.member_scroll.setStyleSheet(f"QScrollArea {{ background: {bg}; border: none; }} QScrollArea::viewport {{ background: {bg}; }}")
+        self.member_scroll.viewport().setStyleSheet(f"background: {bg};")
         self.member_scroll.setWidget(self.member_container)
         self.member_scroll.setFixedHeight(140)
         root.addWidget(self.member_scroll)
@@ -348,25 +374,21 @@ class _TeamHistoryDialog(QDialog):
         root.addWidget(events_heading)
 
         self.events_container = QWidget()
+        self.events_container.setObjectName("TeamHistoryEventsContainer")
+        self.events_container.setStyleSheet(f"QWidget#TeamHistoryEventsContainer {{ background: {bg}; }}")
         self.events_layout = QVBoxLayout(self.events_container)
-        self.events_layout.setContentsMargins(6, 6, 6, 6)
+        self.events_layout.setContentsMargins(0, 0, 0, 0)
         self.events_layout.setSpacing(10)
 
         self.events_scroll = QScrollArea()
+        self.events_scroll.setObjectName("TeamHistoryEventsScroll")
         self.events_scroll.setWidgetResizable(True)
         self.events_scroll.setFrameShape(QFrame.Shape.NoFrame)
         self.events_scroll.setWidget(self.events_container)
-        self.events_scroll.setFixedHeight(240)
-        self.events_scroll.setStyleSheet("QScrollArea { background: transparent; padding: 6px; }")
-        root.addWidget(self.events_scroll)
-
-        btn_row = QHBoxLayout()
-        btn_row.addStretch()
-        close_btn = QPushButton("Close")
-        close_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        close_btn.clicked.connect(self.accept)
-        btn_row.addWidget(close_btn)
-        root.addLayout(btn_row)
+        self.events_scroll.setMinimumHeight(260)
+        self.events_scroll.setStyleSheet(f"QScrollArea {{ background: {bg}; border: none; }} QScrollArea::viewport {{ background: {bg}; }}")
+        self.events_scroll.viewport().setStyleSheet(f"background: {bg};")
+        root.addWidget(self.events_scroll, 1)
 
         self.refresh()
 
@@ -448,25 +470,38 @@ class _TeamHistoryDialog(QDialog):
             for username in sorted(member_actions.keys()):
                 stats = member_actions[username]
                 total = sum(stats.values())
-                summary = f"{username}: "
-                parts = []
-                if stats["completed"] > 0:
-                    parts.append(f"{stats['completed']} ✓")
-                if stats["created"] > 0:
-                    parts.append(f"{stats['created']} ➕")
-                if stats["commented"] > 0:
-                    parts.append(f"{stats['commented']} 💬")
-                if stats["modified"] > 0:
-                    parts.append(f"{stats['modified']} ✏")
-                summary += " • ".join(parts) if parts else "(no activity)"
-                
                 card = QFrame()
-                card.setStyleSheet(f"QFrame {{ background: {self._card_bg}; border: 1px solid {self._border}; border-radius: 10px; }}")
+                card.setObjectName("TeamHistoryMemberCard")
+                card.setStyleSheet(
+                    f"QFrame#TeamHistoryMemberCard {{ background: {self._card_bg}; "
+                    f"border: 1px solid {self._soft_border}; border-radius: 12px; }}"
+                )
                 cl = QHBoxLayout(card)
-                cl.setContentsMargins(10, 8, 10, 8)
-                lbl = QLabel(summary)
-                lbl.setStyleSheet(f"color: {c['text']}; font-size: 11px; font-weight: 700;")
-                cl.addWidget(lbl)
+                cl.setContentsMargins(14, 10, 14, 10)
+                cl.setSpacing(8)
+
+                name_lbl = QLabel(str(username))
+                name_lbl.setStyleSheet(f"color: {c['text']}; font-size: 12px; font-weight: 900;")
+                cl.addWidget(name_lbl, 1)
+
+                for key, label in (
+                    ("completed", "Done"),
+                    ("created", "Created"),
+                    ("commented", "Comments"),
+                    ("modified", "Updates"),
+                ):
+                    count = int(stats.get(key) or 0)
+                    if count <= 0:
+                        continue
+                    cl.addWidget(self._build_history_chip(f"{label}: {count}", c))
+
+                total_lbl = QLabel(f"{total} total")
+                total_lbl.setStyleSheet(
+                    f"background: {rgba(c['accent'], 0.14)}; color: {c['accent']}; "
+                    f"border: 1px solid {rgba(c['accent'], 0.28)}; border-radius: 9px; "
+                    "padding: 3px 9px; font-size: 10px; font-weight: 900;"
+                )
+                cl.addWidget(total_lbl)
                 self.member_layout.addWidget(card)
         else:
             empty = QLabel("No member activity recorded.")
@@ -481,20 +516,111 @@ class _TeamHistoryDialog(QDialog):
 
         for ev in reversed(events[-200:]):
             card = QFrame()
-            card.setStyleSheet(f"QFrame {{ background: {self._card_bg}; border: 1px solid {self._border}; border-radius: 12px; }}")
+            card.setObjectName("TeamHistoryEventCard")
+            card.setStyleSheet(
+                f"QFrame#TeamHistoryEventCard {{ background: {self._card_bg}; "
+                f"border: 1px solid {self._soft_border}; border-radius: 14px; }}"
+            )
             cl = QHBoxLayout(card)
-            cl.setContentsMargins(14, 10, 14, 10)
+            cl.setContentsMargins(14, 12, 14, 12)
+            cl.setSpacing(12)
             typ = str(ev.get("event_type") or "event")
             actor = ev.get("actor_username") or "System"
             created = str(ev.get("created_at") or "")
             payload = ev.get("payload") or {}
-            summary_html = f"{created.split('T')[0]} • <span style='font-weight:800'>{typ}</span> • {actor}"
-            lbl = QLabel()
-            lbl.setTextFormat(Qt.TextFormat.RichText)
-            lbl.setText(summary_html)
-            lbl.setStyleSheet(f"color: {c['text']}; font-size: 12px; font-weight: 700;")
-            cl.addWidget(lbl)
+
+            badge = QLabel(self._event_initial(typ))
+            badge.setFixedSize(34, 34)
+            badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            badge.setStyleSheet(
+                f"background: {rgba(c['accent'], 0.16)}; color: {c['accent']}; "
+                f"border: 1px solid {rgba(c['accent'], 0.24)}; border-radius: 17px; "
+                "font-size: 12px; font-weight: 900;"
+            )
+            cl.addWidget(badge)
+
+            text_col = QVBoxLayout()
+            text_col.setContentsMargins(0, 0, 0, 0)
+            text_col.setSpacing(3)
+            title_lbl = QLabel(self._event_title(typ))
+            title_lbl.setStyleSheet(f"color: {c['text']}; font-size: 12px; font-weight: 900;")
+            text_col.addWidget(title_lbl)
+
+            detail = self._event_detail(payload)
+            if detail:
+                detail_lbl = QLabel(detail)
+                detail_lbl.setWordWrap(True)
+                detail_lbl.setStyleSheet(f"color: {c['sub']}; font-size: 11px; font-weight: 700;")
+                text_col.addWidget(detail_lbl)
+            cl.addLayout(text_col, 1)
+
+            meta_lbl = QLabel(f"{self._format_event_date(created)}\n{actor}")
+            meta_lbl.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            meta_lbl.setStyleSheet(f"color: {c['sub']}; font-size: 10px; font-weight: 800;")
+            cl.addWidget(meta_lbl)
             self.events_layout.addWidget(card)
+
+    def _build_history_chip(self, text, c):
+        chip = QLabel(str(text))
+        chip.setStyleSheet(
+            f"background: {self._chip_bg}; color: {c['chip_text']}; "
+            f"border: 1px solid {self._soft_border}; border-radius: 9px; "
+            "padding: 3px 9px; font-size: 10px; font-weight: 900;"
+        )
+        return chip
+
+    def _event_title(self, event_type):
+        key = str(event_type or "").strip().lower()
+        names = {
+            "member_added": "Member added",
+            "member_removed": "Member removed",
+            "member_role_updated": "Role updated",
+            "task_created": "Task created",
+            "task_updated": "Task updated",
+            "task_completed": "Task completed",
+            "task_deleted": "Task deleted",
+            "task_comment": "Task comment",
+            "team_message": "Team message",
+            "team_alert": "Team alert",
+        }
+        if key in names:
+            return names[key]
+        label = key.replace("_", " ").strip()
+        return label.title() if label else "Team event"
+
+    def _event_initial(self, event_type):
+        words = [w for w in self._event_title(event_type).split() if w]
+        return "".join(w[0] for w in words[:2]).upper() or "E"
+
+    def _event_detail(self, payload):
+        if not isinstance(payload, dict):
+            return ""
+        parts = []
+        task_title = payload.get("title") or payload.get("task_title")
+        if task_title:
+            parts.append(str(task_title))
+        target = payload.get("username") or payload.get("target_username") or payload.get("member_username")
+        if target:
+            parts.append(f"Member: {target}")
+        old_role = payload.get("old_role")
+        new_role = payload.get("new_role") or payload.get("role")
+        if old_role or new_role:
+            role_text = f"{old_role or 'role'} -> {new_role or 'role'}"
+            parts.append(role_text)
+        message = payload.get("message")
+        if message:
+            parts.append(str(message))
+        return " | ".join(parts[:2])
+
+    def _format_event_date(self, raw):
+        raw = str(raw or "").strip()
+        if not raw:
+            return "Unknown"
+        normalized = raw.replace("Z", "+00:00").replace("T", " ").split(".")[0]
+        try:
+            return datetime.fromisoformat(normalized).strftime("%Y-%m-%d %H:%M")
+        except Exception:
+            return normalized[:16] if normalized else "Unknown"
 
 
 class _TeamAnalyticsDialog(QDialog):
@@ -1184,12 +1310,15 @@ class TeamPage(QWidget):
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
         self.scroll = QScrollArea()
+        self.scroll.setObjectName("TeamPageScroll")
         self.scroll.setWidgetResizable(True)
         self.scroll.setFrameShape(QFrame.Shape.NoFrame)
         self.scroll.setStyleSheet("QScrollArea { background: transparent; }")
         root.addWidget(self.scroll)
 
         self.content = QWidget()
+        self.content.setObjectName("TeamContent")
+        self.content.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.scroll.setWidget(self.content)
         layout = QVBoxLayout(self.content)
         layout.setContentsMargins(40, 40, 40, 40)
@@ -1277,8 +1406,11 @@ class TeamPage(QWidget):
             pass
 
         self.members_container = QWidget()
+        self.members_container.setObjectName("TeamMembersContainer")
+        self.members_container.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.members_container.setLayout(self.members_list)
         self.members_scroll = QScrollArea()
+        self.members_scroll.setObjectName("TeamMembersScroll")
         self.members_scroll.setWidgetResizable(True)
         self.members_scroll.setFrameShape(QFrame.Shape.NoFrame)
         self.members_scroll.setStyleSheet("QScrollArea { background: transparent; }")
@@ -1307,6 +1439,12 @@ class TeamPage(QWidget):
         chat_header.addWidget(self.chat_title)
         chat_header.addStretch()
 
+        self.btn_send_alert = QPushButton("Alert")
+        self.btn_send_alert.setObjectName("TeamAlertButton")
+        self.btn_send_alert.clicked.connect(self.send_team_alert)
+        self.btn_send_alert.setVisible(False)
+        chat_header.addWidget(self.btn_send_alert)
+
         chat_header.addWidget(self.chat_hint)
         chat_layout.addLayout(chat_header)
 
@@ -1315,8 +1453,11 @@ class TeamPage(QWidget):
         self.chat_list.setContentsMargins(6, 6, 6, 6)
 
         self.chat_container = QWidget()
+        self.chat_container.setObjectName("TeamChatContainer")
+        self.chat_container.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.chat_container.setLayout(self.chat_list)
         self.chat_scroll = QScrollArea()
+        self.chat_scroll.setObjectName("TeamChatScroll")
         self.chat_scroll.setWidgetResizable(True)
         self.chat_scroll.setFrameShape(QFrame.Shape.NoFrame)
         self.chat_scroll.setStyleSheet("QScrollArea { background: transparent; }")
@@ -1378,12 +1519,15 @@ class TeamPage(QWidget):
         recent_layout.addLayout(tasks_header)
 
         self.tasks_container = QWidget()
+        self.tasks_container.setObjectName("TeamTasksContainer")
+        self.tasks_container.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.tasks_layout = QVBoxLayout(self.tasks_container)
         self.tasks_layout.setContentsMargins(0, 0, 0, 0)
         self.tasks_layout.setSpacing(14)
         self.tasks_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         self.recent_tasks_scroll = QScrollArea()
+        self.recent_tasks_scroll.setObjectName("TeamRecentTasksScroll")
         self.recent_tasks_scroll.setWidgetResizable(True)
         self.recent_tasks_scroll.setFrameShape(QFrame.Shape.NoFrame)
         self.recent_tasks_scroll.setStyleSheet("QScrollArea { background: transparent; }")
@@ -1400,8 +1544,17 @@ class TeamPage(QWidget):
     def update_theme(self, theme):
         self.current_theme = theme
         c = get_theme(theme)
+        page_bg = "#000000" if theme == "Dark" else "#FFFFFF"
+        panel_bg = rgba(c["card_alt"], 0.92) if theme == "Dark" else c["card_alt"]
+        chat_bg = rgba(c["card"], 0.85)
         self.setStyleSheet(
-            f"QWidget#TeamPage {{ background: {c['bg']}; font-family: '{FONT_FAMILY}', 'Segoe UI'; }}"
+            f"QWidget#TeamPage {{ background: {page_bg}; font-family: '{FONT_FAMILY}', 'Segoe UI'; }}"
+            f"QWidget#TeamContent {{ background: {page_bg}; }}"
+            f"QWidget#TeamMembersContainer {{ background: {page_bg}; }}"
+            f"QWidget#TeamTasksContainer {{ background: {panel_bg}; }}"
+            f"QScrollArea#TeamPageScroll {{ background: {page_bg}; border: none; }}"
+            f"QScrollArea#TeamPageScroll > QWidget > QWidget {{ background: {page_bg}; }}"
+            f"QScrollArea#TeamPageScroll QAbstractScrollArea::viewport {{ background: {page_bg}; }}"
             f"QLabel#TeamTitle {{ color: {c['text']}; font-size: 30px; font-weight: 900; }}"
             f"QLabel#TeamServer {{ color: {c['sub']}; font-size: 12px; }}"
             f"QFrame#TeamBar {{ background: {rgba(c['card'], 0.96)}; border: 1px solid {c['border']}; border-radius: 14px; }}"
@@ -1419,17 +1572,25 @@ class TeamPage(QWidget):
             f"QLabel#TeamChatTitle {{ color: {c['text']}; font-size: 14px; font-weight: 900; }}"
             f"QLabel#TeamMembersCount {{ background: transparent; color: {c['sub']}; padding: 2px 2px; font-size: 10px; font-weight: 800; }}"
             f"QLabel#TeamChatHint {{ background: {rgba(c['accent'], 0.2)}; color: {c['accent']}; border-radius: 10px; padding: 2px 8px; font-size: 9px; font-weight: 800; }}"
+            f"QPushButton#TeamAlertButton {{ background: {c['bad']}; color: white; border-radius: 10px; padding: 6px 12px; font-size: 10px; font-weight: 900; }}"
+            f"QPushButton#TeamAlertButton:hover {{ background: #B91C1C; }}"
             f"QFrame#TeamChatInputCard {{ background: {rgba(c['card_alt'], 0.85)}; border: 1px solid {rgba(c['border'], 0.7)}; border-radius: 22px; }}"
             f"QLineEdit#TeamChatInput {{ background: transparent; border: none; padding: 0 4px; color: {c['text']}; font-size: 12px; }}"
             f"QPushButton#TeamChatSend {{ background: {c['primary_gradient']}; color: white; border-radius: 22px; padding: 0; font-weight: 900; }}"
             f"QPushButton#TeamChatSend:hover {{ background: {c['accent']}; }}"
         )
+        self._apply_scroll_background(self.scroll, page_bg)
+        self._apply_scroll_background(self.members_scroll, page_bg)
+        self._apply_scroll_background(self.chat_scroll, chat_bg)
+        self._apply_scroll_background(self.recent_tasks_scroll, panel_bg)
         if hasattr(self, "members_container"):
-            self.members_container.setStyleSheet("QWidget { background: transparent; }")
+            self.members_container.setStyleSheet(f"QWidget#TeamMembersContainer {{ background: {page_bg}; }}")
         if hasattr(self, "chat_container"):
             self.chat_container.setStyleSheet(
-                f"QWidget {{ background: {rgba(c['card'], 0.85)}; border: 1px solid {rgba(c['border'], 0.6)}; border-radius: 16px; }}"
+                f"QWidget#TeamChatContainer {{ background: {chat_bg}; border: 1px solid {rgba(c['border'], 0.6)}; border-radius: 16px; }}"
             )
+        if hasattr(self, "tasks_container"):
+            self.tasks_container.setStyleSheet(f"QWidget#TeamTasksContainer {{ background: {panel_bg}; }}")
         for i in range(self.tasks_layout.count()):
             item = self.tasks_layout.itemAt(i)
             widget = item.widget() if item else None
@@ -1438,6 +1599,24 @@ class TeamPage(QWidget):
                     widget.update_theme(theme)
                 except Exception:
                     pass
+
+    def _apply_scroll_background(self, scroll, bg):
+        try:
+            scroll.setStyleSheet(
+                f"QScrollArea {{ background: {bg}; border: none; }}"
+                f"QScrollArea::viewport {{ background: {bg}; }}"
+                f"QScrollBar:vertical {{ background: {bg}; width: 10px; margin: 0; }}"
+                f"QScrollBar::handle:vertical {{ background: {rgba(get_theme(self.current_theme)['border'], 0.85)}; border-radius: 5px; min-height: 24px; }}"
+                f"QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0; }}"
+                f"QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{ background: {bg}; }}"
+                f"QScrollBar:horizontal {{ background: {bg}; height: 10px; margin: 0; }}"
+                f"QScrollBar::handle:horizontal {{ background: {rgba(get_theme(self.current_theme)['border'], 0.85)}; border-radius: 5px; min-width: 24px; }}"
+                f"QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{ width: 0; }}"
+                f"QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {{ background: {bg}; }}"
+            )
+            scroll.viewport().setStyleSheet(f"background: {bg};")
+        except Exception:
+            pass
 
     def refresh_teams(self):
         self.server_label.setText(f"Server: {get_base_url()}")
@@ -1611,7 +1790,7 @@ class TeamPage(QWidget):
             elif et in ("member_removed",):
                 refresh_members = True
                 refresh_tasks = True
-            elif et in ("team_message",):
+            elif et in ("team_message", "team_alert"):
                 refresh_chat = True
             elif et in ("task_comment",):
                 # Comments are shown inside the task dialog; keep the main list fresh.
@@ -1650,6 +1829,23 @@ class TeamPage(QWidget):
             QMessageBox.warning(self, "Team Chat", str(e))
             return
         self.chat_input.clear()
+        self.refresh_chat()
+
+    def send_team_alert(self):
+        if not self.current_team_id:
+            QMessageBox.information(self, "Team Alert", "Please select a team first.")
+            return
+        if not self._can_send_alerts():
+            QMessageBox.information(self, "Team Alert", "Only managers and admins can send alerts.")
+            return
+        msg, ok = self._prompt_text("Send Alert", "Alert message")
+        if not ok or not msg:
+            return
+        try:
+            api_send_team_alert(self.current_team_id, msg)
+        except ApiError as e:
+            QMessageBox.warning(self, "Team Alert", str(e))
+            return
         self.refresh_chat()
 
     def _render_tasks(self, tasks, focus_map=None):
@@ -1708,13 +1904,16 @@ class TeamPage(QWidget):
             return 0
 
     def _can_manage_roles(self):
-        return str(self._current_role or "").strip().lower() == "owner"
+        return self._role_rank(self._current_role) >= self._role_rank("admin")
 
     def _can_assign_tasks(self):
-        return str(self._current_role or "").strip().lower() == "owner"
+        return self._role_rank(self._current_role) >= self._role_rank("admin")
 
     def _is_team_admin(self):
-        return str(self._current_role or "").strip().lower() == "owner"
+        return self._role_rank(self._current_role) >= self._role_rank("admin")
+
+    def _can_send_alerts(self):
+        return self._role_rank(self._current_role) >= self._role_rank("manager")
 
     def _update_admin_controls(self):
         is_admin = bool(self.current_team_id) and self._is_team_admin()
@@ -1726,12 +1925,18 @@ class TeamPage(QWidget):
                 btn.setVisible(bool(is_admin))
             except Exception:
                 pass
+        alert_btn = getattr(self, "btn_send_alert", None)
+        if alert_btn:
+            try:
+                alert_btn.setVisible(bool(self.current_team_id) and self._can_send_alerts())
+            except Exception:
+                pass
 
     def _set_member_role(self, user_id: int, new_role: str):
         if not self.current_team_id:
             return
         role = str(new_role or "").strip().lower()
-        if role not in ("member", "manager"):
+        if role not in ("member", "manager", "admin"):
             return
         try:
             api_update_team_member_role(self.current_team_id, int(user_id), role)
@@ -1950,7 +2155,8 @@ class TeamPage(QWidget):
             role_combo.setCursor(Qt.CursorShape.PointingHandCursor)
             role_combo.addItem("member")
             role_combo.addItem("manager")
-            role_combo.setCurrentText(r if r in ("member", "manager") else "member")
+            role_combo.addItem("admin")
+            role_combo.setCurrentText(r if r in ("member", "manager", "admin") else "member")
             role_combo.currentTextChanged.connect(lambda new_r, uid=int(user_id): self._set_member_role(uid, new_r))
             role_combo.setStyleSheet(
                 f"QComboBox {{ background: {c['input_bg']}; border: 1px solid {rgba(c['border'], 0.8)}; border-radius: 10px; padding: 4px 8px; color: {c['text']}; }}"
@@ -2043,9 +2249,17 @@ class TeamPage(QWidget):
             text = msg.get("message") if isinstance(msg, dict) else None
             created_at = msg.get("created_at") if isinstance(msg, dict) else None
             is_own = bool(current_user and username and str(username).strip().lower() == current_user)
+            raw_text = str(text or "")
+            is_alert = raw_text.startswith("[ALERT] ")
+            display_text = raw_text[len("[ALERT] "):] if is_alert else raw_text
 
             bubble = QFrame()
-            if is_own:
+            if is_alert:
+                bubble_bg = rgba(c["bad"], 0.16)
+                border = rgba(c["bad"], 0.72)
+                body_color = c["text"]
+                time_color = c["sub"]
+            elif is_own:
                 bubble_bg = c["primary_gradient"]
                 border = rgba(c["accent2"], 0.55)
                 body_color = "white"
@@ -2064,6 +2278,13 @@ class TeamPage(QWidget):
             bubble_layout.setSpacing(4)
 
             header = QHBoxLayout()
+            if is_alert:
+                alert_badge = QLabel("ALERT")
+                alert_badge.setStyleSheet(
+                    f"background: {c['bad']}; color: white; border-radius: 8px; padding: 1px 8px; "
+                    "font-size: 9px; font-weight: 900;"
+                )
+                header.addWidget(alert_badge)
             if not is_own:
                 name = QLabel(str(username or "User").upper())
                 name.setStyleSheet(f"font-size: 9px; font-weight: 800; color: {c['accent']}; letter-spacing: 1px;")
@@ -2076,7 +2297,7 @@ class TeamPage(QWidget):
                 header.addWidget(time_lbl)
             bubble_layout.addLayout(header)
 
-            body = QLabel(text or "")
+            body = QLabel(display_text)
             body.setWordWrap(True)
             body.setStyleSheet(f"font-size: 11px; font-weight: 650; color: {body_color};")
             bubble_layout.addWidget(body)
@@ -2256,7 +2477,7 @@ class TeamPage(QWidget):
     def delete_task(self, task_id):
         if not self.current_team_id or not task_id:
             return
-        if str(self._current_role or "").strip().lower() != "owner":
+        if not self._is_team_admin():
             QMessageBox.information(self, "Team Tasks", "Only the team admin can delete team tasks.")
             return
         try:
@@ -2266,7 +2487,7 @@ class TeamPage(QWidget):
         self.refresh_tasks()
 
     def edit_task(self, t_id):
-        if str(self._current_role or "").strip().lower() != "owner":
+        if not self._is_team_admin():
             QMessageBox.information(self, "Team Tasks", "Only the team admin can edit team tasks.")
             return
         task = self._tasks_cache.get(t_id)
@@ -2430,7 +2651,7 @@ class TeamPage(QWidget):
             extra_meta=extra_meta,
         )
         card.update_theme(self.current_theme)
-        is_admin = str(self._current_role or "").strip().lower() == "owner"
+        is_admin = self._is_team_admin()
         try:
             card.btn_edit.setVisible(bool(is_admin))
             card.btn_del.setVisible(bool(is_admin))

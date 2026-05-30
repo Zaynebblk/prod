@@ -25,7 +25,6 @@ from PyQt6.QtWidgets import (
     QApplication,
 )
 
-from pages.settings_page import Toggle
 from resources.api_client import (
     ApiError,
     api_get_user_avatar,
@@ -141,7 +140,6 @@ class UserProfilePage(QWidget):
             "user_role",
             "user_department",
             "user_join_date",
-            "user_two_factor",
             "user_skills",
             "user_profile_picture",
         )
@@ -153,7 +151,6 @@ class UserProfilePage(QWidget):
         profile["role"] = str(settings.pop("user_role", "") or "").strip()
         profile["department"] = str(settings.pop("user_department", "") or "").strip()
         profile["join_date"] = str(settings.pop("user_join_date", "") or "").strip()
-        profile["two_factor"] = bool(settings.pop("user_two_factor", False))
         profile["skills"] = settings.pop("user_skills", None)
         profile["local_picture_path"] = settings.pop("user_profile_picture", None)
 
@@ -370,21 +367,6 @@ class UserProfilePage(QWidget):
         pwd_row.addWidget(self.btn_change_password)
         security_l.addLayout(pwd_row)
 
-        twofa_row = QHBoxLayout()
-        twofa_left = QVBoxLayout()
-        twofa_left.setSpacing(2)
-        twofa_name = QLabel("Two-factor Authentication")
-        twofa_name.setObjectName("ProfileRowTitle")
-        twofa_meta = QLabel("Protect your account with a second step")
-        twofa_meta.setObjectName("ProfileRowMeta")
-        twofa_left.addWidget(twofa_name)
-        twofa_left.addWidget(twofa_meta)
-        self.toggle_twofa = Toggle()
-        self.toggle_twofa.setObjectName("ProfileToggle")
-        twofa_row.addLayout(twofa_left)
-        twofa_row.addStretch()
-        twofa_row.addWidget(self.toggle_twofa, alignment=Qt.AlignmentFlag.AlignRight)
-        security_l.addLayout(twofa_row)
         security_l.addStretch()
 
         # --- Skills card ---
@@ -531,7 +513,6 @@ class UserProfilePage(QWidget):
                     "role": settings.get("user_role", ""),
                     "department": settings.get("user_department", ""),
                     "join_date": settings.get("user_join_date", ""),
-                    "two_factor": settings.get("user_two_factor", False),
                     "skills": settings.get("user_skills"),
                     "projects": settings.get("user_projects", ""),
                     "local_picture_path": settings.get("user_profile_picture"),
@@ -558,8 +539,6 @@ class UserProfilePage(QWidget):
                     save_settings(settings)
                 except Exception:
                     pass
-
-            self.toggle_twofa.setChecked(bool(profile.get("two_factor", False)))
 
             self._skills = self._normalize_skills(profile.get("skills"))
             self._render_skill_chips()
@@ -745,7 +724,6 @@ class UserProfilePage(QWidget):
                 profile["department"] = self.input_department.text().strip()
                 profile["skills"] = list(self._skills)
                 profile["projects"] = self.text_projects.toPlainText()
-                profile["two_factor"] = bool(self.toggle_twofa.isChecked())
                 if not str(profile.get("join_date", "") or "").strip():
                     profile["join_date"] = datetime.now().strftime("%Y-%m-%d")
             else:
@@ -753,7 +731,6 @@ class UserProfilePage(QWidget):
                 settings["user_role"] = self.input_role.text().strip()
                 settings["user_department"] = self.input_department.text().strip()
                 settings["user_skills"] = list(self._skills)
-                settings["user_two_factor"] = bool(self.toggle_twofa.isChecked())
                 settings["user_projects"] = self.text_projects.toPlainText()
                 if not str(settings.get("user_join_date", "") or "").strip():
                     settings["user_join_date"] = datetime.now().strftime("%Y-%m-%d")
@@ -983,15 +960,6 @@ class UserProfilePage(QWidget):
             QLabel#ProfileFooterHint {{ color: {c['sub']}; font-size: 11px; font-weight: 700; }}
             """
         )
-
-        # Keep the Toggle colors coherent with the theme.
-        try:
-            self.toggle_twofa._bg_color = rgba(c["border"], 0.55)
-            self.toggle_twofa._active_color = c["accent"]
-            self.toggle_twofa._circle_color = c["text"]
-            self.toggle_twofa.update()
-        except Exception:
-            pass
 
         self._render_skill_chips()
         self._refresh_activity()
